@@ -6,69 +6,177 @@ var gulp = require('gulp')
   , uglify = require('gulp-uglify')
   , minifyHtml = require('gulp-minify-html')
   , minifyCss = require('gulp-minify-css')
-  , rev = require('gulp-rev');
+  , rev = require('gulp-rev')
+  , swig = require('gulp-swig')
+  , prettify = require('gulp-html-prettify')
+  , rename = require('gulp-rename')
+  ;
 
+var config = {
+  app: {
+    src: 'src/',
+    index: 'index.html',
+    dist: {
+      dev: 'dist/dev/',
+      production: 'dist/production/'
+    },
+    min: 'dist_min'
+  },
+  html: {
+    src: [
+      '{{ config.app.src }}/swig/*.html',
+    ],
+    dest: '{{ config.app.src }}/',
+    watch: [
+      '{{ config.app.src }}/swig/**',
+    ]
+  },
+  less: {
+    src: [
+      '{{ config.app.src }}/assets/less/main.less',
+      '{{ config.app.src }}/assets/less/libs.less',
+      '{{ config.app.src }}/assets/less/animations.less'
+    ],
+    dest: '{{ config.app.src }}/assets/css/',
+    watch: [
+      '{{ config.app.src }}/assets/less/**'
+    ],
+    config: {
+      paths: [
+        '{{ config.app.src }}/assets/less/',
+        '{{ config.app.src }}/vendors/',
+        '{{ config.app.src }}'
+      ]
+    }
+  },
+}
+
+// Inititla config before use
+config = interpolate(config);
+
+/**
+ * DEV:Swig
+ * From swig to html
+ */
+gulp.task('dev:swig', function() {
+  return gulp
+    .src(config.html.src)
+    .pipe(swig({
+      defaults: {
+        cache: false
+      }
+    }))
+    .pipe(gulp.dest(config.html.dest));
+});
 
 /**
  * Dev:Less
  * LESS to CSS
  */
 gulp.task('dev:less', function() {
-    return gulp
-    .src(['src/less/main.less', 'src/less/libs.less', 'src/less/animations.less'])
-    .pipe(less({
-        paths: [
-            'src/less',
-            'src/vendors'
-        ]
-    }))
-    .pipe(gulp.dest('src/css/'))
+  return gulp
+  .src(config.less.src)
+  .pipe(less(config.less.config))
+  .pipe(gulp.dest(config.less.dest))
 });
 
 /**
  * Dev:Watch
  */
 gulp.task('dev:watch', function() {
-    gulp.watch(['src/*.html'], ['dev:less']);
-    gulp.watch(['src/less/**'], ['dev:less']);
-    gulp.watch(['src/js/**'], ['dev:less']);
+  gulp.watch(config.html.watch, ['dev:swig']);
+  gulp.watch(config.less.watch, ['dev:less']);
 });
 
+
+gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
+
+  // DEV
+    gulp
+      .src(['src/index.copy.html'])
+      .pipe(usemin())
+      .pipe(gulp.dest(config.app.dist.dev));
+    gulp
+      .src([config.app.src+'/**',
+        '!'+config.app.src+'/assets/css/**',
+        '!'+config.app.src+'/assets/css',
+        '!'+config.app.src+'/assets/less/**',
+        '!'+config.app.src+'/assets/less',
+        '!'+config.app.src+'/assets/js/**',
+        '!'+config.app.src+'/assets/js',
+        '!'+config.app.src+'/swig/**',
+        '!'+config.app.src+'/swig',
+        '!'+config.app.src+'/*.html',
+        '!'+config.app.src+'/vendors/**',
+        '!'+config.app.src+'/vendors'])
+      .pipe(gulp.dest(config.app.dist.dev));
+
+    gulp
+      .src([config.app.src+'*.html', '!'+config.app.src+'/index.copy.html',])
+      .pipe(prettify({
+        indent_char: ' ', 
+        indent_size: 2
+      }))
+      .pipe(gulp.dest(config.app.dist.dev));
+});
+
+gulp.task('dist:production', function() {
+  //   PRODUCTION minify files
+    // CSS
+    gulp
+      .src([config.app.dist.dev+'assets/css/**'])
+      .pipe(minifyCss())
+//      .pipe(rename({
+//        suffix: '.min'
+//      }))
+      .pipe(gulp.dest(config.app.dist.production+'assets/css/'));
+    
+    gulp
+      .src([config.app.dist.dev+'assets/js/**'])
+      .pipe(uglify())
+      .pipe(gulp.dest(config.app.dist.production+'assets/js/'));
+
+    gulp
+      .src([config.app.dist.dev+'*.html'])
+      .pipe(minifyHtml({
+        empty: true,
+        quotes: true
+      }))
+      .pipe(gulp.dest(config.app.dist.production));
+  
+})
 /**
  * Production:Compile
  */
-gulp.task('dist', ['dev:less'], function() {
-    gulp
-    .src(['src/*.html'])
-    .pipe(usemin({
-        csslib: [minifyCss(), 'concat'],
-        cssmains: [minifyCss(), 'concat'],
-        cssanim: [minifyCss(), 'concat'],
-        js: [uglify()],
-        iejs: [uglify()]
-    }))
-    .pipe(gulp.dest('dist/'));
-
-    // Copy all images ..
-    gulp
-    .src('src/img/**')
-    .pipe(gulp.dest('dist/img'));
-
-    // .. and everything at root dir
-    //   except index.html and vendor dir
-    gulp
-    .src(['src/**',
-          '!src/less/**',
-          '!src/less',
-          '!src/vendors/**',
-          '!src/vendors'])
-    .pipe(gulp.dest('dist/'));
-});
+gulp.task('dist', ['dist:dev']);
 
 /**
  * $ gulp
  */
 gulp.task('default', [
-    'dev:less',
-    'dev:watch'
+  'dev:swig',
+  'dev:less',
+  'dev:watch'
 ]);
+
+
+/**
+ * @param opt
+ * @return {Object}
+ * @description
+ */
+function interpolate(opt) {
+  var self = this;
+
+  if('string' == typeof opt && /{{.+?}}/.test(opt)) {
+    opt = opt.replace(/{{\s*(.+?)\s*}}/g, function(str, expr) {
+      return eval(expr);
+    });
+  } else if('object' == typeof opt) {
+    for(var k in opt) {
+      opt[k] = arguments.callee.call(self, opt[k]);
+    }
+  }
+
+  return opt;
+}

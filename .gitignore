@@ -6,3 +6,7 @@
 /src/vendors/
 /src/css/
 /dist/
+
+#Eclipse
+.project
+.settings

@@ -1,0 +1,29 @@
+html,
+body {
+  position: relative;
+}
+body {
+  display: block;
+  overflow-x: hidden;
+  color: #000000;
+  font-family: "Roboto", sans-serif;
+  overflow: -moz-scrollbars-none;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+a,
+a:focus,
+a:active,
+a:hover {
+  outline: 0;
+  text-decoration: none;
+  color: inherit;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+::scroll-bar {
+  display: none;
+}

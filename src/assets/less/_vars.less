@@ -1,0 +1,23 @@
+// Color scheme
+// ------------
+@white: #fff;
+
+// Text
+// ----
+@fontColor: #000;
+@fontFamily: "Roboto", sans-serif;
+
+// Others
+// ------
+@mainSpacing: 10px;
+@animateSpeed: 300ms;
+
+/* === Responsive config === */
+
+// Below and Above Responsive
+/* < 767  */ @mobletBelow: ~"only screen and (max-width: @{screen-xs-max})";
+/* >= 768  */ @mobletAbove: ~"only screen and (min-width: @{screen-sm-min})";
+/* < 991  */ @tabletBelow: ~"only screen and (max-width: @{screen-sm-max})";
+/* >= 992  */ @tabletAbove: ~"only screen and (min-width: @{screen-md-min})";
+/* < 1199 */ @desktopBelow: ~"only screen and (max-width: @{screen-md-max})";
+/* >= 1199 */ @desktopAbove: ~"only screen and (min-width: @{screen-md-max})";
