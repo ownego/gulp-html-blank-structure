@@ -1,7 +1,7 @@
 {
-  "name": "xalolead",
+  "name": "gulp-html-blank",
   "version": "0.0.1",
-  "description": "Xalo Lead",
+  "description": "Gulp Blank Html structure",
   "license": "MIT",
   "private": true,
   "dependencies": {
