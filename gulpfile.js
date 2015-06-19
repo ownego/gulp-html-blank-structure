@@ -18,7 +18,11 @@ var config = {
     index: 'index.html',
     dist: {
       dev: 'dist/dev/',
-      production: 'dist/production/'
+      production: 'dist/production/',
+      indent: {
+        indent_char: ' ', 
+        indent_size: 2
+      }
     },
     min: 'dist_min'
   },
@@ -113,10 +117,7 @@ gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
 
     gulp
       .src([config.app.src+'*.html', '!'+config.app.src+'/index.copy.html',])
-      .pipe(prettify({
-        indent_char: ' ', 
-        indent_size: 2
-      }))
+      .pipe(prettify(config.app.dist.indent))
       .pipe(gulp.dest(config.app.dist.dev));
 });
 
