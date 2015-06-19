@@ -1,4 +1,4 @@
-# A Blank Html structure for front end developement
+# A Blank Html structure for front end development
 
 ## Installation
 Just type in command step by step:
