@@ -116,7 +116,7 @@ gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
       .pipe(gulp.dest(config.app.dist.dev));
 
     gulp
-      .src([config.app.src+'*.html', '!'+config.app.src+'/index.copy.html',])
+      .src([config.app.src+'*.html'])
       .pipe(prettify(config.app.dist.indent))
       .pipe(gulp.dest(config.app.dist.dev));
 });
