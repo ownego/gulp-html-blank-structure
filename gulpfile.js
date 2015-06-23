@@ -97,7 +97,7 @@ gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
 
   // DEV
     gulp
-      .src(['src/index.copy.html'])
+      .src(['src/*.html'])
       .pipe(usemin())
       .pipe(gulp.dest(config.app.dist.dev));
     gulp
