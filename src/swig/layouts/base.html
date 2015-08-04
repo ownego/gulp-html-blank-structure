@@ -51,8 +51,11 @@
   <!-- Javascript makes everything alive -->
   {% block scripts %}
     <!-- build:js ./js/libs.js -->
+      <script src="{{ vendorDir }}/jquery/dist/jquery.js"></script>
     <!-- endbuild -->
-    <script src="./assets/js/main.js"></script>
+    <!-- build:mainjs ./js/main.js -->
+      <script src="./assets/js/main.js"></script>
+    <!-- endbuild -->
   {% endblock %}
 </body>
 </html>

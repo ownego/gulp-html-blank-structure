@@ -20,9 +20,10 @@ var config = {
       dev: 'dist/dev/',
       production: 'dist/production/',
       indent: {
-        indent_char: ' ', 
-        indent_size: 2
-      }
+        indentSize: 2,
+        indentChar: ' ',
+        noBlankLine: true
+      },
     },
     min: 'dist_min'
   },
@@ -97,16 +98,11 @@ gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
 
   // DEV
     gulp
-      .src(['src/*.html'])
-      .pipe(usemin())
-      .pipe(gulp.dest(config.app.dist.dev));
-    gulp
       .src([config.app.src+'/**',
         '!'+config.app.src+'/assets/css/**',
         '!'+config.app.src+'/assets/css',
         '!'+config.app.src+'/assets/less/**',
         '!'+config.app.src+'/assets/less',
-        '!'+config.app.src+'/assets/js/**',
         '!'+config.app.src+'/assets/js',
         '!'+config.app.src+'/swig/**',
         '!'+config.app.src+'/swig',
@@ -116,8 +112,10 @@ gulp.task('dist:dev', ['dev:swig', 'dev:less'], function() {
       .pipe(gulp.dest(config.app.dist.dev));
 
     gulp
-      .src([config.app.src+'*.html'])
-      .pipe(prettify(config.app.dist.indent))
+      .src(['src/*.html'])
+//      .src([config.app.src+'*.html'])
+      .pipe(tidyHtml(config.app.dist.indent))
+      .pipe(usemin())
       .pipe(gulp.dest(config.app.dist.dev));
 });
 
@@ -131,7 +129,7 @@ gulp.task('dist:production', function() {
 //        suffix: '.min'
 //      }))
       .pipe(gulp.dest(config.app.dist.production+'assets/css/'));
-    
+
     gulp
       .src([config.app.dist.dev+'assets/js/**'])
       .pipe(uglify())
@@ -144,7 +142,21 @@ gulp.task('dist:production', function() {
         quotes: true
       }))
       .pipe(gulp.dest(config.app.dist.production));
-  
+
+    gulp
+    .src([config.app.dist.dev+'/**',
+      '!'+config.app.dist.dev+'/assets/css/**',
+      '!'+config.app.dist.dev+'/assets/css',
+      '!'+config.app.dist.dev+'/assets/less/**',
+      '!'+config.app.dist.dev+'/assets/less',
+      '!'+config.app.dist.dev+'/assets/js/**',
+      '!'+config.app.dist.dev+'/assets/js',
+      '!'+config.app.dist.dev+'/swig/**',
+      '!'+config.app.dist.dev+'/swig',
+      '!'+config.app.dist.dev+'/*.html',
+      '!'+config.app.dist.dev+'/vendors/**',
+      '!'+config.app.dist.dev+'/vendors'])
+    .pipe(gulp.dest(config.app.dist.production));
 })
 /**
  * Production:Compile
@@ -180,4 +192,60 @@ function interpolate(opt) {
   }
 
   return opt;
+}
+
+/**
+ * tidyHtml
+ */
+function tidyHtml(opts) {
+  var through2 = require('through2'),
+    jsBeautify = require('js-beautify');
+
+  return through2.obj(function (file, enc, next) {
+    if (file.isNull()) {
+      this.push(file);
+      return next();
+    }
+
+    if (file.isStream()) {
+      this.emit(
+        'error',
+        new PluginError('tidy-html', 'Streaming not supported')
+      );
+      return next();
+    }
+
+    if (file.isBuffer()) {
+      var contents = file.contents.toString('utf8');
+
+      // Strip comments
+      //   except IE conditional comments
+      //   if(
+      if (opts.noComment) {
+        contents = contents.replace(/<!--\s*(?!\[if\s+(lte?|gte?)?\s+IE).*-->/gmi, '');
+      }
+
+      // JS Beautify
+      //   indent + format
+      contents = jsBeautify.html(contents, {
+        indent_size: opts.indentSize || 4,
+        indent_char: opts.indentChar || ' ',
+        preserve_newlines: false,
+        unformatted: ['pre']
+      });
+
+      // Remove all blank lines,
+      //   actually they have been removed by jsBeautify
+      //   but we still have separators between
+      //   <html>, <head> and <body> ..
+      if (opts.noBlankLine) {
+        contents = contents.replace(/^\s*[\r\n]+/gm, '');
+      }
+
+      file.contents = new Buffer(contents);
+    }
+
+    this.push(file);
+    return next();
+  })
 }
